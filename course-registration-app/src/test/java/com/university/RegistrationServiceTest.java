@@ -150,4 +150,72 @@ class RegistrationServiceTest {
         assertFalse(result);
         assertFalse(student.isRegistered("CS301"));
     }
+
+    @Test
+    void shouldRejectRegistrationWhenCourseIsAtCapacity() {
+
+        Student firstStudent = new Student("S101", "Anita");
+        Student secondStudent = new Student("S102", "Rahul");
+        Student thirdStudent = new Student("S103", "Priya");
+
+        Course course = new Course(
+                "CS301",
+                "Data Structures",
+                4,
+                2,
+                true,
+                null
+        );
+
+        RegistrationService service = new RegistrationService();
+
+        // Fill the course to its capacity.
+        assertTrue(service.register(firstStudent, course));
+        assertTrue(service.register(secondStudent, course));
+
+        assertEquals(2, course.getCurrentEnrollment());
+
+        // Capture the third student's state before the rejected attempt.
+        int creditsBefore = thirdStudent.getTotalCredits();
+
+        boolean result = service.register(thirdStudent, course);
+
+        // The full course must reject another registration.
+        assertFalse(result);
+        assertFalse(thirdStudent.isRegistered("CS301"));
+        assertEquals(creditsBefore, thirdStudent.getTotalCredits());
+        assertEquals(2, course.getCurrentEnrollment());
+    }
+
+    @Test
+    void shouldAllowRegistrationWhenExactlyOneSeatRemains() {
+
+        Student firstStudent = new Student("S101", "Anita");
+        Student secondStudent = new Student("S102", "Rahul");
+
+        Course course = new Course(
+                "CS301",
+                "Data Structures",
+                4,
+                2,
+                true,
+                null
+        );
+
+        RegistrationService service = new RegistrationService();
+
+        // One student registered; one seat remains.
+        assertTrue(service.register(firstStudent, course));
+        assertEquals(1, course.getCurrentEnrollment());
+
+        int creditsBefore = secondStudent.getTotalCredits();
+
+        boolean result = service.register(secondStudent, course);
+
+        // The last available seat must be accepted.
+        assertTrue(result);
+        assertTrue(secondStudent.isRegistered("CS301"));
+        assertEquals(creditsBefore + 4, secondStudent.getTotalCredits());
+        assertEquals(2, course.getCurrentEnrollment());
+    }
 }
