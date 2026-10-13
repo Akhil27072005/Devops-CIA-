@@ -16,14 +16,14 @@ pipeline {
         stage('Build and Test') {
             steps {
                 echo 'Running Maven tests from the repository root'
-                sh 'mvn clean test'
+                bat 'mvn clean test'
             }
         }
 
         stage('Package') {
             steps {
                 echo 'Packaging the application from the repository root'
-                sh 'mvn package'
+                bat 'mvn package'
             }
         }
     }
