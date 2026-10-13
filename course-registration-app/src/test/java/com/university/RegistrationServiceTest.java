@@ -218,4 +218,83 @@ class RegistrationServiceTest {
         assertEquals(creditsBefore + 4, secondStudent.getTotalCredits());
         assertEquals(2, course.getCurrentEnrollment());
     }
+
+    @Test
+    void shouldRecordAuditEntryAfterSuccessfulRegistration() {
+
+        Student student = new Student("S101", "Anita");
+
+        Course course = new Course(
+                "CS301",
+                "Data Structures",
+                4,
+                30,
+                true,
+                null
+        );
+
+        RegistrationService service = new RegistrationService();
+
+        boolean result = service.register(student, course);
+
+        assertTrue(result);
+        assertEquals(1, service.getAuditLog().size());
+        assertEquals(
+                "studentId=S101, courseCode=CS301",
+                service.getAuditLog().get(0));
+    }
+
+    @Test
+    void shouldNotRecordAuditEntryForRejectedRegistration() {
+
+        Student student = new Student("S101", "Anita");
+
+        Course course = new Course(
+                "CS301",
+                "Data Structures",
+                4,
+                30,
+                false,
+                null
+        );
+
+        RegistrationService service = new RegistrationService();
+
+        boolean result = service.register(student, course);
+
+        assertFalse(result);
+        assertTrue(service.getAuditLog().isEmpty());
+    }
+
+    @Test
+    void shouldPreserveEarlierAuditEntryAfterRejectedAttempt() {
+
+        Student student = new Student("S101", "Anita");
+
+        Course course = new Course(
+                "CS301",
+                "Data Structures",
+                4,
+                30,
+                true,
+                null
+        );
+
+        RegistrationService service = new RegistrationService();
+
+        assertTrue(service.register(student, course));
+
+        String originalEntry =
+                "studentId=S101, courseCode=CS301";
+
+        assertEquals(1, service.getAuditLog().size());
+        assertEquals(originalEntry, service.getAuditLog().get(0));
+
+        // A duplicate registration must be rejected.
+        assertFalse(service.register(student, course));
+
+        // The previous entry must remain unchanged.
+        assertEquals(1, service.getAuditLog().size());
+        assertEquals(originalEntry, service.getAuditLog().get(0));
+    }
 }
